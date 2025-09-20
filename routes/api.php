@@ -1,34 +1,39 @@
 <?php
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Web\UsuarioController;
-use App\Http\Controllers\Web\MarcacaoController;
-use App\Http\Controllers\Web\AbonoController;
-use App\Http\Controllers\Web\HorarioController;
-use App\Http\Controllers\Web\FeriadoController;
-use App\Http\Controllers\Web\RhController;
+// Registro de usuário
+Route::post('/register', function (Request $request) {
+    $request->validate([
+        'name' => 'required',
+        'email' => 'required|email|unique:users',
+        'password' => 'required|min:6'
+    ]);
 
-// Usuários
-Route::get('/usuarios', [UsuarioController::class, 'index']);
-Route::post('/usuarios', [UsuarioController::class, 'store']);
-Route::get('/usuarios/{id}/espelho', [UsuarioController::class, 'espelho']);
+    $user = User::create([
+        'name' => $request->name,
+        'email' => $request->email,
+        'password' => Hash::make($request->password),
+    ]);
 
-// Marcações
-Route::get('/usuarios/{id}/marcacoes', [MarcacaoController::class, 'index']);
-Route::post('/usuarios/{id}/marcacoes', [MarcacaoController::class, 'store']);
-Route::put('/marcacoes/{id}', [MarcacaoController::class, 'update']);
+    return response()->json($user);
+});
 
-// Abonos
-Route::get('/usuarios/{id}/abonos', [AbonoController::class, 'index']);
-Route::post('/usuarios/{id}/abonos', [AbonoController::class, 'store']);
+// Login
+Route::post('/login', function (Request $request) {
+    $user = User::where('email', $request->email)->first();
 
-// Horários
-Route::get('/horarios', [HorarioController::class, 'index']);
-Route::post('/horarios', [HorarioController::class, 'store']);
+    if (! $user || ! Hash::check($request->password, $user->password)) {
+        return response()->json(['message' => 'Credenciais inválidas'], 401);
+    }
 
-// Feriados
-Route::get('/feriados', [FeriadoController::class, 'index']);
-Route::post('/feriados', [FeriadoController::class, 'store']);
+    $token = $user->createToken('token')->plainTextToken;
 
-// Dashboard RH
-Route::get('/rh/dashboard', [RhController::class, 'index']);
+    return response()->json(['token' => $token]);
+});
+
+// Usuário autenticado
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return $request->user();
+});

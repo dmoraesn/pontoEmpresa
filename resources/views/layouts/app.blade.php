@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR" class="h-full">
 <head>
-@livewireStyles
+    @livewireStyles
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Ponto Empresa') - Ponto Empresa</title>
@@ -46,6 +46,7 @@
             <x-sidebar-link route="usuarios.index" icon="ri-group-line" label="Usuários" />
             <x-sidebar-link route="horarios.index" icon="ri-time-history-line" label="Horários" />
             <x-sidebar-link route="feriados.index" icon="ri-calendar-event-line" label="Feriados" />
+            <x-sidebar-link route="afastamentos.index" icon="ri-user-unfollow-line" label="Afastamentos" />
         </nav>
     </aside>
 
@@ -75,9 +76,6 @@
 {{-- Scripts extras (via @push) --}}
 @stack('scripts')
 
-...
 @livewireScripts
-
-
 </body>
 </html>
