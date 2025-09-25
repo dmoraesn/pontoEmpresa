@@ -1,5 +1,8 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\PublicQRCodeController;
 use App\Http\Controllers\Web\AfastamentoController;
 use App\Http\Controllers\Web\DashboardController;
@@ -9,85 +12,80 @@ use App\Http\Controllers\Web\AbonoController;
 use App\Http\Controllers\Web\HorarioController;
 use App\Http\Controllers\Web\FeriadoController;
 use App\Http\Controllers\Web\FeriasController;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PontoController;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes
+| Rotas Web
+|--------------------------------------------------------------------------
+| Aqui ficam todas as rotas da aplicação
 |--------------------------------------------------------------------------
 */
 
-// --- ROTAS DE AUTENTICAÇÃO ---
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login')->middleware('guest');
+/**
+ * ROTAS DE LOGIN / LOGOUT
+ */
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [LoginController::class, 'form'])->name('login');
+    Route::post('/login', [LoginController::class, 'auth'])->name('login.auth');
+});
 
-Route::post('/login', function (Request $request) {
-    $credentials = $request->only('email', 'password');
+Route::post('/logout', [LoginController::class, 'logout'])
+    ->name('logout')
+    ->middleware('auth');
 
-    if (Auth::attempt($credentials)) {
-        $request->session()->regenerate();
-        return redirect()->intended('/');
-    }
 
-    return back()->withErrors([
-        'email' => 'Usuário ou senha incorretos.',
-    ]);
-})->name('login.auth');
+/**
+ * ROTAS ADMINISTRATIVAS (somente admin)
+ */
+Route::middleware(['auth', 'check.tipo:admin'])->group(function () {
 
-Route::post('/logout', function (Request $request) {
-    Auth::logout();
-    $request->session()->invalidate();
-    $request->session()->regenerateToken();
-    return redirect('/login');
-})->name('logout');
-
-// --- GRUPO DE ROTAS PROTEGIDAS POR AUTENTICAÇÃO ---
-Route::middleware(['auth'])->group(function () {
-
-    // --- ROTA PRINCIPAL ---
+    // Dashboard (rota raiz do admin)
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
     Route::post('/dashboard/update-marcacao', [MarcacaoController::class, 'updateFromDashboard'])
         ->name('dashboard.update-marcacao');
 
-    // --- GRUPO DE ROTAS CENTRADAS NO USUÁRIO ---
+    // Usuários
     Route::prefix('usuarios')->name('usuarios.')->group(function () {
         Route::resource('/', UsuarioController::class)->parameters(['' => 'usuario']);
-
         Route::get('/{usuario}/espelho', [UsuarioController::class, 'espelho'])->name('espelho');
         Route::get('/{usuario}/espelho/pdf', [UsuarioController::class, 'gerarEspelhoPDF'])->name('espelho.pdf');
 
-        Route::prefix('{usuario}/ponto')->name('ponto.')->group(function () {
-            Route::get('/', [MarcacaoController::class, 'index'])->name('index');
-            Route::post('/', [MarcacaoController::class, 'store'])->name('store');
-            Route::get('/{marcacao}/edit', [MarcacaoController::class, 'edit'])->name('edit');
-            Route::put('/{marcacao}', [MarcacaoController::class, 'update'])->name('update');
-            Route::delete('/{marcacao}', [MarcacaoController::class, 'destroy'])->name('destroy');
+        Route::prefix('{usuario}')->group(function () {
+            Route::resource('ponto', MarcacaoController::class);
+            Route::resource('abonos', AbonoController::class)->only(['index', 'store', 'destroy']);
+            Route::resource('ferias', FeriasController::class)->only(['index', 'store', 'destroy']);
         });
-
-        Route::get('/{usuario}/abonos', [AbonoController::class, 'index'])->name('abonos.index');
-        Route::post('/{usuario}/abonos', [AbonoController::class, 'store'])->name('abonos.store');
-        Route::delete('/{usuario}/abonos/{abono}', [AbonoController::class, 'destroy'])->name('abonos.destroy');
-
-        Route::get('/{usuario}/ferias', [FeriasController::class, 'index'])->name('ferias.index');
-        Route::post('/{usuario}/ferias', [FeriasController::class, 'store'])->name('ferias.store');
-        Route::delete('/{usuario}/ferias/{ferias}', [FeriasController::class, 'destroy'])->name('ferias.destroy');
     });
 
-    // --- ROTAS DE RECURSOS GLOBAIS ---
-    Route::resource('horarios', HorarioController::class);
-    Route::resource('feriados', FeriadoController::class);
+    // Recursos globais
+    Route::resources([
+        'horarios'     => HorarioController::class,
+        'feriados'     => FeriadoController::class,
+        'afastamentos' => AfastamentoController::class,
+    ]);
 
-    Route::post('/marcacoes/ajuste-rapido', [MarcacaoController::class, 'ajusteRapido'])->name('marcacoes.ajusteRapido');
-
-    Route::resource('afastamentos', AfastamentoController::class);
+    Route::post('/marcacoes/ajuste-rapido', [MarcacaoController::class, 'ajusteRapido'])
+        ->name('marcacoes.ajusteRapido');
 });
 
-// --- PÁGINAS PÚBLICAS (fora do auth) ---
-Route::get('/registro-publico', function () {
-    return view('public.presenca');
-});
 
+/**
+ * ROTAS FUNCIONÁRIOS
+ */
+Route::middleware(['auth', 'check.tipo:funcionario'])
+    ->prefix('funcionario')
+    ->name('funcionario.')
+    ->group(function () {
+        Route::get('/ponto', [PontoController::class, 'index'])->name('ponto');
+        Route::post('/ponto/marcar', [PontoController::class, 'marcar'])->name('marcar');
+        Route::get('/historico', [PontoController::class, 'historico'])->name('historico');
+    });
+
+
+/**
+ * PÁGINAS PÚBLICAS
+ */
+Route::view('/registro-publico', 'public.presenca')->name('registro.publico');
 Route::get('/qrcode', [PublicQRCodeController::class, 'show'])->name('qrcode.public');

@@ -1,43 +1,28 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Sistema de Ponto')</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@yield('title', 'Ponto Empresa')</title>
 
-    {{-- Estilos (Tailwind via Vite) --}}
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {{-- Tailwind CSS via CDN --}}
+    <script src="https://cdn.tailwindcss.com"></script>
 
-    {{-- Fallback caso Tailwind não carregue --}}
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    {{-- Fonte Inter --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+    </style>
+
+    @stack('styles')
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
+<body class="min-h-screen flex items-center justify-center">
 
-    {{-- Cabeçalho (aparece só para usuários logados) --}}
-    @auth
-        <header class="bg-white shadow">
-            <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <img src="{{ asset('images/logo.png') }}" alt="Logo da Empresa" class="h-10">
-                    <span class="text-xl font-bold text-gray-700">Sistema de Ponto</span>
-                </div>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="text-sm text-red-600 hover:underline">Sair</button>
-                </form>
-            </div>
-        </header>
-    @endauth
+    @yield('content')
 
-    {{-- Conteúdo principal --}}
-    <main class="flex-1 flex items-center justify-center p-6">
-        @yield('content')
-    </main>
-
-    {{-- Rodapé --}}
-    <footer class="bg-gray-200 text-center py-4 text-sm text-gray-600">
-        &copy; {{ date('Y') }} - Sistema de Ponto. Todos os direitos reservados.
-    </footer>
-
+    @stack('scripts')
 </body>
 </html>

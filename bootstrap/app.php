@@ -12,7 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // 🔑 Registrando os middlewares
+        $middleware->alias([
+            'auth'       => \App\Http\Middleware\Authenticate::class,
+            'guest'      => \App\Http\Middleware\RedirectIfAuthenticated::class,
+            'check.tipo' => \App\Http\Middleware\CheckTipoUsuario::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

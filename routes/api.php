@@ -1,39 +1,18 @@
 <?php
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use App\Models\User;
 
-// Registro de usuário
-Route::post('/register', function (Request $request) {
-    $request->validate([
-        'name' => 'required',
-        'email' => 'required|email|unique:users',
-        'password' => 'required|min:6'
-    ]);
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\PontoController;
 
-    $user = User::create([
-        'name' => $request->name,
-        'email' => $request->email,
-        'password' => Hash::make($request->password),
-    ]);
+// 🔐 Rotas públicas (sem autenticação)
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
 
-    return response()->json($user);
-});
+// 🔒 Rotas protegidas por Sanctum
+Route::middleware('auth:sanctum')->group(function () {
+    // Dados do usuário logado
+    Route::get('/user', [AuthController::class, 'user']);
 
-// Login
-Route::post('/login', function (Request $request) {
-    $user = User::where('email', $request->email)->first();
-
-    if (! $user || ! Hash::check($request->password, $user->password)) {
-        return response()->json(['message' => 'Credenciais inválidas'], 401);
-    }
-
-    $token = $user->createToken('token')->plainTextToken;
-
-    return response()->json(['token' => $token]);
-});
-
-// Usuário autenticado
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+    // Marcação de ponto
+    Route::post('/bater-ponto', [PontoController::class, 'bater']);
 });

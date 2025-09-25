@@ -19,4 +19,9 @@ class DatabaseSeeder extends Seeder
         // Criar afastamentos fake
         \App\Models\Afastamento::factory(20)->create();
     }
+    public function run(): void
+{
+    $this->call(UsuarioSeeder::class);
+}
+
 }

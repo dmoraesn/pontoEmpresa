@@ -4,30 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Marcacao extends Model
 {
     use HasFactory;
 
-    /**
-     * Indica se o modelo deve ser timestamped.
-     *
-     * @var bool
-     */
-    public $timestamps = false;
+    public $timestamps = false; // ✅ não cria/atualiza created_at e updated_at
 
-    /**
-     * O nome da tabela associada com o model.
-     *
-     * @var string
-     */
     protected $table = 'marcacoes';
 
-    /**
-     * Os atributos que podem ser atribuídos em massa.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'usuario_id',
         'data_hora',
@@ -35,25 +21,25 @@ class Marcacao extends Model
         'origem',
     ];
 
-    /**
-     * Define o tipo do atributo data_hora como um objeto Carbon.
-     *
-     * @var array
-     */
     protected $casts = [
         'data_hora' => 'datetime',
     ];
 
     /**
-     * Define o relacionamento com o usuário.
+     * Relacionamento com o usuário.
      */
     public function usuario()
     {
         return $this->belongsTo(Usuario::class);
     }
 
-
-
-
-    
+    /**
+     * Formata a data/hora no padrão brasileiro.
+     */
+    public function getDataHoraFormatadaAttribute()
+    {
+        return $this->data_hora
+            ? Carbon::parse($this->data_hora)->format('d/m/Y H:i')
+            : null;
+    }
 }

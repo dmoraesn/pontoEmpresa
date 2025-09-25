@@ -4,17 +4,30 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
-class Usuario extends Model
+class Usuario extends Authenticatable
 {
-    use HasFactory;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $table = 'usuarios';
     public $timestamps = false;
 
     protected $fillable = [
-        'nome', 'email', 'cpf', 'cargo', 'ativo'
+        'nome',
+        'email',
+        'cpf',
+        'cargo',
+        'ativo',
+        'tipo_usuario', // 👈 precisa estar aqui
+        'password',
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
     ];
 
     public function marcacoes()
@@ -25,7 +38,7 @@ class Usuario extends Model
     public function marcacoesHoje()
     {
         return $this->hasMany(\App\Models\Marcacao::class, 'usuario_id')
-                    ->whereDate('data_hora', Carbon::today());
+            ->whereDate('data_hora', Carbon::today());
     }
 
     public function abonos()

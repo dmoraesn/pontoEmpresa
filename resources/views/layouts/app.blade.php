@@ -60,6 +60,21 @@
 
         {{-- Conteúdo dinâmico --}}
         <main class="flex-1 overflow-x-hidden overflow-y-auto p-6">
+            {{-- Mensagens Flash --}}
+            @if(session('error'))
+                <div class="mb-4 p-3 rounded bg-red-100 border border-red-400 text-red-700">
+                    <i class="ri-error-warning-line mr-1"></i>
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            @if(session('success'))
+                <div class="mb-4 p-3 rounded bg-green-100 border border-green-400 text-green-700">
+                    <i class="ri-checkbox-circle-line mr-1"></i>
+                    {{ session('success') }}
+                </div>
+            @endif
+
             @yield('content')
         </main>
     </div>
